@@ -1,58 +1,48 @@
 #include "i2c_software_slave_lib.h"
 
-static inline void reset_values() {
-    i2c_fifo.reset_fifo();
-    i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
-    i2c_bit_counter = 0;
-}
-
 
 void i2c_software_slave_init(uint sda_pin, uint scl_pin, uint8_t slave_address, i2c_software_slave_event_handler event_handler)
 {
-    sda = sda_pin;
-    scl = scl_pin;
-
-    i2c_address            = slave_address;
-    i2c_receive_condition  = ((i2c_address << 1) | 1); // Shift address up 1 bit and add 1 to end
-    i2c_transmit_condition = ((i2c_address << 1) & ~1); // Shift address up 1 bit and add 0 to end
-
-    _event_handler = event_handler;
-
-    i2c_state = I2C_STATE_NULL;
-    reset_values();
+    // You cannot have more than 16 i2c slave instances, limited by number of pins
+    assert(number_of_i2c_software_slave_instances < MAX_NUMBER_OF_SLAVES);
 
     // init i2c pins 
-    gpio_init(sda);
-    gpio_init(scl);
+    gpio_init(sda_pin);
+    gpio_init(scl_pin);
 
-    gpio_set_dir(sda, GPIO_IN);
-    gpio_set_dir(scl, GPIO_IN);
+    gpio_set_dir(sda_pin, GPIO_IN);
+    gpio_set_dir(scl_pin, GPIO_IN);
 
-    gpio_set_slew_rate(sda, GPIO_SLEW_RATE_FAST);
-    gpio_set_slew_rate(scl, GPIO_SLEW_RATE_FAST);
+    gpio_set_slew_rate(sda_pin, GPIO_SLEW_RATE_FAST);
+    gpio_set_slew_rate(scl_pin, GPIO_SLEW_RATE_FAST);
+
+    // create new i2c_slave_instance
+    i2c_software_slave_instances[number_of_i2c_software_slave_instances] = new i2c_software_slave(sda_pin, scl_pin, slave_address, event_handler);
+    number_of_i2c_software_slave_instances++;
 
     // attach triggers to pins
     gpio_set_irq_callback(&i2c_software_slave_trigger_handler);
     
-    gpio_set_irq_enabled(sda, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(sda_pin, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
     irq_set_enabled(IO_IRQ_BANK0, true);
-    gpio_set_irq_enabled(scl, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(scl_pin, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
     irq_set_enabled(IO_IRQ_BANK0, true);
+
 }
 
 void i2c_software_slave_trigger_handler(uint gpio, uint32_t event)
 {
-    if (gpio == sda)
+    // loop through all instances of i2c_software_slave
+    for(int i = 0; i < number_of_i2c_software_slave_instances; i++)
     {
-        sda_trigger_handler(gpio, event);
-    }
-    else if (gpio == scl)
-    {
-        scl_trigger_handler(gpio, event);
+        if (gpio == i2c_software_slave_instances[i]->get_sda_pin())
+            i2c_software_slave_instances[i]->sda_trigger_handler(gpio, event);
+        else if (gpio == i2c_software_slave_instances[i]->get_scl_pin())
+            i2c_software_slave_instances[i]->scl_trigger_handler(gpio, event);
     }
 }
 
-void sda_trigger_handler(uint gpio, uint32_t event)
+void i2c_software_slave::sda_trigger_handler(uint gpio, uint32_t event)
 {
     bool clock_level = gpio_get(scl);
     // Start condition is a falling edge while scl is high
@@ -72,7 +62,7 @@ void sda_trigger_handler(uint gpio, uint32_t event)
     }
 }
 
-void scl_trigger_handler(uint gpio, uint32_t event)
+void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
 {
     // Whenever we a reading a pin it must be when scl is high
     if (event == GPIO_IRQ_EDGE_RISE)
@@ -188,3 +178,9 @@ void scl_trigger_handler(uint gpio, uint32_t event)
         } // END switch i2c_state
     } // END if event
 } // END scl trigger handling
+
+inline void i2c_software_slave::reset_values() {
+    i2c_fifo.reset_fifo();
+    i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
+    i2c_bit_counter = 0;
+}
