@@ -20,7 +20,7 @@ Then ensure the enviroment variable is set for your device
 ```
 and add the line
 ```
-    export PICO_SDK_PATH path/to/pico-sdk
+    export PICO_SDK_PATH=path/to/pico-sdk
 ```
 
 To build all C++ / C examples navigate into the C++ folder
