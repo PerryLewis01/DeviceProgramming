@@ -7,6 +7,22 @@ These are examples to demonstrate different capabilities of the device.
 
 ## C++
 ### Build all
+First ensure you have the pico-sdk correctly installed on your computer, the cmake does not install this for you. To do this
+```sh
+    git clone raspberrypi/pico-sdk
+    cd pico-sdk
+    git submodule update --init
+```
+
+Then ensure the enviroment variable is set for your device
+```sh
+    nano ~/.bashrc
+```
+and add the line
+```
+    export PICO_SDK_PATH path/to/pico-sdk
+```
+
 To build all C++ / C examples navigate into the C++ folder
 
 ```sh
