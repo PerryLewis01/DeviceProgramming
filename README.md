@@ -9,7 +9,7 @@ These are examples to demonstrate different capabilities of the device.
 ### Build all
 First ensure you have the pico-sdk correctly installed on your computer, the cmake does not install this for you. To do this
 ```sh
-    git clone raspberrypi/pico-sdk
+    git clone https://github.com/raspberrypi/pico-sdk
     cd pico-sdk
     git submodule update --init
 ```
