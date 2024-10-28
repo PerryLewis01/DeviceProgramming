@@ -14,13 +14,32 @@ First ensure you have the pico-sdk correctly installed on your computer, the cma
     git submodule update --init
 ```
 
+### Linux
 Then ensure the enviroment variable is set for your device
 ```sh
     nano ~/.bashrc
 ```
 and add the line
+ensure the file location ends with /pico-sdk
 ```
-    export PICO_SDK_PATH=path/to/pico-sdk
+    export PICO_SDK_PATH=path/to/folder/pico-sdk
+```
+
+### Mac
+Then ensure the enviroment variable is set for your device
+```sh
+    nano ~/.zshrc
+```
+and add the line
+ensure the file location ends with /pico-sdk
+```
+    export PICO_SDK_PATH="path/to/folder/pico-sdk"
+```
+
+### Windows
+ensure the file location ends with /pico-sdk
+```sh
+    setx PICO_SDK_PATH "path/to/folder/pico-sdk"
 ```
 
 To build all C++ / C examples navigate into the C++ folder
