@@ -86,6 +86,8 @@ class i2c_software_slave
 
         uint get_sda_pin() { return sda; }
         uint get_scl_pin() { return scl; }
+
+        uint8_t get_i2c_fifo() { return i2c_fifo.data; }
     
     private:
         uint sda;

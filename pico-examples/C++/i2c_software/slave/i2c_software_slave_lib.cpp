@@ -42,6 +42,12 @@ void i2c_software_slave_trigger_handler(uint gpio, uint32_t event)
     }
 }
 
+inline void i2c_software_slave::reset_values() {
+    i2c_fifo.reset_fifo();
+    i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
+    i2c_bit_counter = 0;
+}
+
 void i2c_software_slave::sda_trigger_handler(uint gpio, uint32_t event)
 {
     bool clock_level = gpio_get(scl);
@@ -100,7 +106,6 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
                 gpio_set_dir(sda, GPIO_IN);
                 bool acknowledged = !gpio_get(sda);
                 i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
-                gpio_set_dir(sda, GPIO_OUT);
                 // if not acknowledged we must repeat the last byte
                 if (!acknowledged && i2c_bit_counter >= 8)
                 {
@@ -110,10 +115,17 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
             break;
         
         case I2C_STATE_RECEIVE:
-            if (i2c_acknowledge_state == I2C_ACKNOWLEDGE_STATE_NULL)
+            if (i2c_acknowledge_state == I2C_ACKNOWLEDGE_STATE_TRANSMIT)
+            {
+                i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL; // reset acknowledge after its been read
+            }
+            else if (i2c_acknowledge_state == I2C_ACKNOWLEDGE_STATE_NULL)
             {
                 // Read data into fifo
-                gpio_set_dir(sda, GPIO_IN);
+                if (i2c_bit_counter % 8 == 0)
+                {
+                    gpio_set_dir(sda, GPIO_IN);
+                }
                 i2c_fifo.shift_in(gpio_get(sda));
                 i2c_bit_counter++;
                 if (i2c_bit_counter % 8 == 0)
@@ -148,9 +160,10 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
                 // Every byte get the next one
                 if (i2c_bit_counter % 8 == 0)
                 {
+                    gpio_set_dir(sda, GPIO_IN);
                     _event_handler(i2c_fifo.data, i2c_bit_counter / 8, I2C_SLAVE_REQUEST);
                 }
-
+                gpio_set_dir(sda, GPIO_OUT);
                 // Write the next bit to the output
                 gpio_put(sda, i2c_fifo.shift_in(0));
                 i2c_bit_counter++;
@@ -168,7 +181,10 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
             {
                 gpio_set_dir(sda, GPIO_OUT);
                 gpio_put(sda, 0);
-                i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
+            }
+            else if (i2c_acknowledge_state == I2C_ACKNOWLEDGE_STATE_NULL)
+            {
+                gpio_set_dir(sda, GPIO_IN);
             }
             break;
 
@@ -179,8 +195,3 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
     } // END if event
 } // END scl trigger handling
 
-inline void i2c_software_slave::reset_values() {
-    i2c_fifo.reset_fifo();
-    i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
-    i2c_bit_counter = 0;
-}
