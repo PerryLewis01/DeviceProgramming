@@ -69,8 +69,8 @@ class i2c_software_slave
             scl = scl_pin;
 
             i2c_address            = slave_address;
-            i2c_receive_condition  = ((i2c_address << 1) | 1); // Shift address up 1 bit and add 1 to end
-            i2c_transmit_condition = ((i2c_address << 1) & ~1); // Shift address up 1 bit and add 0 to end
+            i2c_transmit_condition  = ((i2c_address << 1) | 1); // Shift address up 1 bit and add 1 to end
+            i2c_receive_condition = ((i2c_address << 1) & ~1); // Shift address up 1 bit and add 0 to end
 
             _event_handler = event_handler;
 

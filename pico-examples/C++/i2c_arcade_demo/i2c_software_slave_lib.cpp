@@ -107,9 +107,9 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
                 bool acknowledged = !gpio_get(sda);
                 i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_NULL;
                 // if not acknowledged we must repeat the last byte
-                if (!acknowledged && i2c_bit_counter >= 8)
+                if (!acknowledged && i2c_bit_counter >= 9)
                 {
-                    i2c_bit_counter -= 8; 
+                    i2c_bit_counter -= 9; 
                 }
             }
             break;
@@ -158,17 +158,17 @@ void i2c_software_slave::scl_trigger_handler(uint gpio, uint32_t event)
             else if (i2c_acknowledge_state == I2C_ACKNOWLEDGE_STATE_NULL)
             {
                 // Every byte get the next one
-                if (i2c_bit_counter % 8 == 0)
+                if (i2c_bit_counter % 9 == 0)
                 {
                     gpio_set_dir(sda, GPIO_IN);
-                    _event_handler(i2c_fifo.data, i2c_bit_counter / 8, I2C_SLAVE_REQUEST);
+                    _event_handler(i2c_fifo.data, i2c_bit_counter / 9, I2C_SLAVE_REQUEST);
                 }
                 gpio_set_dir(sda, GPIO_OUT);
                 // Write the next bit to the output
                 gpio_put(sda, i2c_fifo.shift_in(0));
                 i2c_bit_counter++;
 
-                if (i2c_bit_counter % 8 == 0)
+                if (i2c_bit_counter % 9 == 0)
                 {
                     i2c_acknowledge_state = I2C_ACKNOWLEDGE_STATE_RECEIVE;
                 }

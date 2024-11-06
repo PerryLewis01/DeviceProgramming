@@ -83,7 +83,7 @@ void event_handler(volatile uint8_t &data, const uint byte_number, const i2c_sof
             data_received = data;
             break;
         case I2C_SLAVE_REQUEST:
-            printf("I2C REQUEST %02x\n", data);
+            printf("I2C REQUEST %02x\n", data_received*2);
             data = data_received * 2;
             set_leds(data);
             break;
