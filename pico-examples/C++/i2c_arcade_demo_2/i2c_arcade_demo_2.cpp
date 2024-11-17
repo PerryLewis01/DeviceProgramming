@@ -3,19 +3,21 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 
+
+
 // LED Pins
-#define LED_PIN_0 8
-#define LED_PIN_1 9
-#define LED_PIN_2 10
-#define LED_PIN_3 11
-#define LED_PIN_4 12
-#define LED_PIN_5 13
-#define LED_PIN_6 14
-#define LED_PIN_7 15
+#define LED_PIN_0 0
+#define LED_PIN_1 1
+#define LED_PIN_2 2
+#define LED_PIN_3 3
+#define LED_PIN_4 4
+#define LED_PIN_5 5
+#define LED_PIN_6 6
+#define LED_PIN_7 7
 
 // Button pins
-#define SDA_BUTTON_PIN 4
-#define SCL_LED_PIN 5
+#define SDA_BUTTON_PIN 26
+#define SCL_LED_PIN 27
 
 // I2C address
 #define I2C_ADDRESS 0x42
@@ -105,8 +107,8 @@ void set_bit(const uint location, const bool value, uint8_t& byte)
 class i2c_software
 {
     public:
-        int sda = 4;
-        int scl = 5;
+        int sda = 26;
+        int scl = 27;
         uint64_t delay_us;
 
         fifo_8bit i2c_fifo;
@@ -334,7 +336,7 @@ int main()
     init_leds();
 
     // Init i2c with button
-    i2c_software i2c(SDA_BUTTON_PIN, SCL_LED_PIN, 10000);
+    i2c_software i2c(SDA_BUTTON_PIN, SCL_LED_PIN, 1);
 
     static uint8_t number = 42;
 

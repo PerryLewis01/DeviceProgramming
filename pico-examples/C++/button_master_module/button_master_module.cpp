@@ -2,22 +2,32 @@
 #include <stdlib.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
+#include "hardware/irq.h"
 
-#include "i2c_software_slave_lib.h"
+#define SDA_PIN 4
+#define SCL_PIN 5
 
-// I2C arcade demo, allows the user to act as master using two buttons and shows the output to 8 led's
 
-// LED Pins
-#define LED_PIN_0 0
-#define LED_PIN_1 1
-#define LED_PIN_2 2
-#define LED_PIN_3 3
-#define LED_PIN_4 4
-#define LED_PIN_5 5
-#define LED_PIN_6 6
-#define LED_PIN_7 7
+// LED pins
+#define LED_PIN_0 8
+#define LED_PIN_1 9
+#define LED_PIN_2 10
+#define LED_PIN_3 11
+#define LED_PIN_4 12
+#define LED_PIN_5 13
+#define LED_PIN_6 14
+#define LED_PIN_7 15
 
-// init led pins
+static uint bit_counter = 0;
+
+// State Machine
+static enum i2c_state_t {
+    I2C_STATE_START = 1,
+    I2C_STATE_TRANSMIT,
+    I2C_STATE_RECEIVE,
+    I2C_STATE_STOP,
+} i2c_state;
+
 void init_leds()
 {
     gpio_init(LED_PIN_0);
@@ -60,40 +70,44 @@ void set_leds(const uint8_t value)
     gpio_put(LED_PIN_7, (value & 0x80));
 }
 
-// Button pins
-#define SDA_BUTTON_PIN 26
-#define SCL_BUTTON_PIN 27
+// 8 bit fifo
 
-// I2C address
-#define I2C_SLAVE_ADDRESS 0x42
-
-static uint8_t data_received = 150;
-
-void event_handler(volatile uint8_t &data, const uint byte_number, const i2c_software_slave_event event)
+struct fifo_8bit
 {
-    switch (event)
+    volatile uint8_t data = 0;
+
+    // Move data into the fifo
+    bool shift_in(bool bit)
+    {   
+        bool out = (data & 0x80);
+        data = data << 1;
+        data = (data & ~(0x01)) | ((uint8_t)bit);
+
+        set_leds(data);
+        return out;
+    }
+
+    // Reset fifo memory
+    void reset_fifo()
     {
-        case I2C_SLAVE_START:
-            printf("I2C START\n");
-            set_leds(data);
-            break;
-        case I2C_SLAVE_RECEIVE:
-            printf("I2C RECEIVE %02x\n", data);
-            set_leds(data);
-            data_received = data;
-            break;
-        case I2C_SLAVE_REQUEST:
-            printf("I2C REQUEST %02x\n", data_received*2);
-            data = data_received * 2;
-            set_leds(data);
-            break;
-        case I2C_SLAVE_STOP:
-            printf("I2C STOP\n");
-            break;
-        default:
-            break;
+        data = 0;
+    }
+};
+
+static fifo_8bit i2c_fifo;
+
+void scl_button_handler(uint gpio, uint32_t event)
+{
+    if (gpio == SCL_PIN && event == GPIO_IRQ_EDGE_RISE)
+    {
+        bool bit = gpio_get(SDA_PIN);
+        i2c_fifo.shift_in(bit);
+
+        set_leds(i2c_fifo.data);
     }
 }
+
+
 
 int main()
 {
@@ -101,13 +115,21 @@ int main()
     sleep_ms(2000);
 
     // Setup code
-    printf("I2C Arcade Demo\n");
+    printf("I2C Button Master\n");
     
-    // Init leds
+    // Init LEDs
     init_leds();
 
-    // Init i2c with buttons
-    i2c_software_slave_init(SDA_BUTTON_PIN, SCL_BUTTON_PIN, I2C_SLAVE_ADDRESS, &event_handler);
+    // Add triggers to buttons
+    gpio_init(SDA_PIN);
+    gpio_init(SCL_PIN);
+    gpio_set_dir(SDA_PIN, GPIO_IN);
+    gpio_set_dir(SCL_PIN, GPIO_IN);
+
+    gpio_set_irq_callback(&scl_button_handler);
+    
+    gpio_set_irq_enabled(SCL_PIN, GPIO_IRQ_EDGE_RISE, true);
+    irq_set_enabled(IO_IRQ_BANK0, true);
 
     while (true)
     {
