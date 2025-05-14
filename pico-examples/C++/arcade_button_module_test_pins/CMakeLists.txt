@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.12)
+
+add_executable(arcade_button_module_test_pins
+    arcade_button_module_test_pins.cpp
+)
+
+target_link_libraries(arcade_button_module_test_pins pico_stdlib)
+
+pico_enable_stdio_usb(arcade_button_module_test_pins 1)
+pico_enable_stdio_uart(arcade_button_module_test_pins 0)
+
+pico_add_extra_outputs(arcade_button_module_test_pins)

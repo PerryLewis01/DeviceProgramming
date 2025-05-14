@@ -9,14 +9,14 @@
 
 
 // LED pins
-#define LED_PIN_0 8
-#define LED_PIN_1 9
-#define LED_PIN_2 10
-#define LED_PIN_3 11
-#define LED_PIN_4 12
-#define LED_PIN_5 13
-#define LED_PIN_6 14
-#define LED_PIN_7 15
+#define LED_PIN_0 17
+#define LED_PIN_1 16
+#define LED_PIN_2 15
+#define LED_PIN_3 14
+#define LED_PIN_4 21
+#define LED_PIN_5 20
+#define LED_PIN_6 19
+#define LED_PIN_7 18
 
 static uint bit_counter = 0;
 
