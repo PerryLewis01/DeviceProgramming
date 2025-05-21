@@ -11,8 +11,8 @@ const uint8_t i2c_miso_condition = (i2c_address << 1) |  1; // Master in  | Slav
 #define SLAVE_MASTER_SWITCH_PIN 17
 volatile bool slave_mode = false;
 
-#define SDA_PIN 4
-#define SCL_PIN 5
+#define SDA_PIN 5
+#define SCL_PIN 4
 
 // LED pins
 #define LED_PIN_0 6
@@ -25,10 +25,10 @@ volatile bool slave_mode = false;
 #define LED_PIN_7 13
 
 // STATE PINS
-#define LED_PIN_I2C_NULL 18
-#define LED_PIN_I2C_START 19
-#define LED_PIN_I2C_RX 20
-#define LED_PIN_I2C_TX 21
+#define LED_PIN_I2C_NULL 19
+#define LED_PIN_I2C_START 20
+#define LED_PIN_I2C_RX 21
+#define LED_PIN_I2C_TX 18
 
 #define LED_PIN_ACK_NULL 14
 #define LED_PIN_ACK_RX 15
@@ -122,12 +122,12 @@ void set_state()
     // Uses global state variables
     gpio_put(LED_PIN_I2C_NULL   , (i2c_state & I2C_STATE_NULL));
     gpio_put(LED_PIN_I2C_START  , (i2c_state & I2C_STATE_START));
-    gpio_put(LED_PIN_I2C_RX     , (i2c_state & I2C_STATE_MOSI));
-    gpio_put(LED_PIN_I2C_TX     , (i2c_state & I2C_STATE_MISO));
+    gpio_put(LED_PIN_I2C_RX     , (i2c_state & I2C_STATE_MISO));
+    gpio_put(LED_PIN_I2C_TX     , (i2c_state & I2C_STATE_MOSI));
 
     gpio_put(LED_PIN_ACK_NULL   , (ack_state & ACK_STATE_NULL));
-    gpio_put(LED_PIN_ACK_RX     , (ack_state & ACK_STATE_MOSI));
-    gpio_put(LED_PIN_ACK_TX     , (ack_state & ACK_STATE_MISO));
+    gpio_put(LED_PIN_ACK_RX     , (ack_state & ACK_STATE_MISO));
+    gpio_put(LED_PIN_ACK_TX     , (ack_state & ACK_STATE_MOSI));
 }
 
 struct fifo_8bit
@@ -201,7 +201,7 @@ void scl_handler(uint32_t event)
                 }
                 // no matter what reset the fifo and bit counter
                 i2c_fifo.reset_fifo();
-                bit_counter = 0;
+                // bit_counter = 0;
             }
             
             break;
@@ -280,7 +280,7 @@ void slave_mode_handler(uint32_t event)
         break;
     
     case GPIO_IRQ_EDGE_RISE:
-        slave_mode = false;
+        slave_mode = true;
         i2c_fifo.reset_fifo();
         bit_counter = 0;
         break;

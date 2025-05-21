@@ -22,10 +22,10 @@ volatile bool slave_mode = false;
 #define LED_PIN_7 13
 
 // STATE PINS
-#define LED_PIN_I2C_NULL 18
-#define LED_PIN_I2C_START 19
-#define LED_PIN_I2C_RX 20
-#define LED_PIN_I2C_TX 21
+#define LED_PIN_I2C_NULL 19
+#define LED_PIN_I2C_START 20
+#define LED_PIN_I2C_RX 21
+#define LED_PIN_I2C_TX 18
 
 #define LED_PIN_ACK_NULL 14
 #define LED_PIN_ACK_RX 15
@@ -102,7 +102,7 @@ void init_leds(void)
     gpio_put(LED_PIN_ACK_TX,    0);
 }
 
-void set_leds(const uint8_t value)
+void set_leds(const uint32_t value)
 {
     gpio_put(LED_PIN_0, (value & 0x01));
     gpio_put(LED_PIN_1, (value & 0x02));
@@ -112,6 +112,14 @@ void set_leds(const uint8_t value)
     gpio_put(LED_PIN_5, (value & 0x20));
     gpio_put(LED_PIN_6, (value & 0x40));
     gpio_put(LED_PIN_7, (value & 0x80));
+    gpio_put(LED_PIN_I2C_NULL   , (value & 0x100));
+    gpio_put(LED_PIN_I2C_START  , (value & 0x200));
+    gpio_put(LED_PIN_I2C_RX     , (value & 0x400));
+    gpio_put(LED_PIN_I2C_TX     , (value & 0x800));
+
+    gpio_put(LED_PIN_ACK_NULL   , (value & 0x1000));
+    gpio_put(LED_PIN_ACK_RX     , (value & 0x2000));
+    gpio_put(LED_PIN_ACK_TX     , (value & 0x4000));
 }
 
 void set_state()
@@ -172,7 +180,15 @@ int main()
 
     init_leds();
 
-    static uint8_t led_toggle = 1;
+    gpio_init(17);
+    gpio_set_dir(17, GPIO_IN);
+    
+    gpio_init(4);
+    gpio_init(5);
+    gpio_set_dir(4, GPIO_IN);
+    gpio_set_dir(5, GPIO_IN);
+
+    static uint32_t led_toggle = 1;
 
     while(true)
     {
@@ -180,9 +196,12 @@ int main()
         led_toggle = led_toggle << 1;
         led_toggle = (led_toggle == 0) ? 1 : led_toggle;
 
+        bool switch_val = gpio_get(17) | gpio_get(4) | gpio_get(5);
+        if (switch_val)
+            led_toggle = 0xFFFF;
         // set_state();
         // shift_state();
-
+        
         sleep_ms(200);
 
     }
